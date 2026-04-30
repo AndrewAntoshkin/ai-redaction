@@ -1,0 +1,2492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ИИ-редакция для Telegram-медиа</title>
+
+  <!-- Suisse Int'l ≈ Switzer (Fontshare), Suisse Works ≈ Boska (Fontshare), Suisse Mono ≈ JetBrains Mono -->
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&f[]=boska@500,600,700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =====================================================================
+       Палитра — снято с deepjudge.ai (webflow CSS, точные значения)
+       ===================================================================== */
+    :root {
+      --beige: #ede9e5;
+      --beige-soft: #f4f2ef;
+      --beige-deep: #e6e0db;
+      --tan: #c6b9ae;
+      --paper: #fafafa;
+      --line: #e0dbd6;
+      --line-strong: #c6b9ae;
+
+      --ink: #242422;
+      --ink-2: #2e2e2e;
+      --ink-soft: #1f1f1e;
+      --muted: #5d6c7b;
+
+      --lavender: #cbc1f1;
+      --lavender-soft: #f7eafa;
+      --lavender-pale: #fef8ff;
+      --purple: #9478fc;
+      --purple-deep: #3b2079;
+      --purple-darker: #280f8b;
+
+      --bg: var(--beige);
+      --surface: var(--paper);
+      --accent: var(--purple);
+
+      --radius-lg: 24px;
+      --radius: 16px;
+      --radius-sm: 8px;
+
+      --font-sans: "Switzer", "Suisse Int'l", "Inter", system-ui, -apple-system, sans-serif;
+      --font-serif: "Boska", "Suisse Works", Georgia, serif;
+      --font-mono: "JetBrains Mono", "Suisse Int'l Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+      --max: 1320px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      letter-spacing: -0.005em;
+    }
+
+    ::selection { background: var(--ink); color: var(--beige); }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* =====================================================================
+       Announcement bar (как у DJ — узкая полоска сверху с CTA-ссылкой)
+       ===================================================================== */
+    .announce {
+      background: var(--ink);
+      color: var(--beige);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: -0.01em;
+      padding: 0.7rem 1.5rem;
+      text-align: center;
+      position: relative;
+      z-index: 60;
+    }
+    .announce a {
+      color: var(--lavender);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+    }
+
+    /* =====================================================================
+       Top navigation
+       ===================================================================== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: saturate(160%) blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 1.05rem clamp(1.25rem, 4vw, 2.5rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .brand .mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+    .brand .mark::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      background: var(--lavender);
+      border-radius: 3px;
+    }
+
+    .topnav {
+      display: none;
+      gap: 2.25rem;
+      font-size: 15px;
+      color: var(--ink);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    @media (min-width: 920px) { .topnav { display: flex; } }
+    .topnav a:hover { color: var(--purple-deep); }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    /* =====================================================================
+       Buttons
+       ===================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      padding: 0.85rem 1.35rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--ink);
+      color: var(--beige);
+    }
+    .btn-primary:hover {
+      background: var(--purple-deep);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--ink);
+    }
+    .btn-ghost:hover {
+      background: var(--ink);
+      color: var(--beige);
+    }
+    .btn-on-dark-primary {
+      background: var(--lavender);
+      color: var(--ink);
+    }
+    .btn-on-dark-primary:hover {
+      background: var(--purple);
+      color: var(--beige);
+    }
+    .btn-on-dark-ghost {
+      background: transparent;
+      color: var(--beige);
+      border-color: rgba(237,233,229,0.35);
+    }
+    .btn-on-dark-ghost:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: var(--beige);
+    }
+    .arrow { display: inline-block; transition: transform 0.2s ease; }
+    .btn:hover .arrow { transform: translateX(4px); }
+
+    /* =====================================================================
+       Section base
+       ===================================================================== */
+    section { position: relative; }
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: 0.0em;
+      text-transform: lowercase;
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 9px; height: 9px;
+      background: var(--purple);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .display-xl {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 56px;
+      letter-spacing: -0.04em;
+      line-height: 0.96;
+      color: var(--ink);
+    }
+    .display-xl em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.025em;
+    }
+
+    .display-l {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: clamp(2.25rem, 4.6vw, 4rem);
+      letter-spacing: -0.035em;
+      line-height: 1.0;
+      color: var(--ink);
+    }
+    .display-l em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    .display-m {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: clamp(1.65rem, 2.6vw, 2.25rem);
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+
+    .lead {
+      font-size: clamp(1.05rem, 1.25vw, 1.18rem);
+      line-height: 1.55;
+      color: var(--ink-2);
+      max-width: 56ch;
+    }
+    .lead.xl {
+      font-size: clamp(1.18rem, 1.5vw, 1.4rem);
+      max-width: 60ch;
+      color: var(--ink);
+    }
+
+    /* =====================================================================
+       HERO
+       ===================================================================== */
+    .hero {
+      padding: clamp(4rem, 8vw, 7rem) 0 clamp(3rem, 6vw, 5rem);
+    }
+    .hero .eyebrow { margin-bottom: 2.25rem; }
+    .hero h1 { margin-bottom: 1.75rem; max-width: 18ch; }
+    .hero .lead { margin-bottom: 2.5rem; }
+    .hero-cta {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(2.5rem, 5vw, 4rem);
+      align-items: end;
+    }
+    @media (min-width: 1020px) {
+      .hero-grid { grid-template-columns: 1.2fr 0.8fr; }
+    }
+
+    /* Hero visual: «карточка-окно» в духе DJ search-card */
+    .hero-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.5rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      box-shadow: 0 1px 0 rgba(36,36,34,0.04);
+    }
+    .hero-card .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .hero-card .query {
+      background: var(--beige-soft);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.85rem 1.1rem 0.85rem 2.5rem;
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      position: relative;
+    }
+    .hero-card .query::before {
+      content: "";
+      position: absolute;
+      left: 1.05rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: var(--purple);
+      border-radius: 50%;
+    }
+    .hero-card .results {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .hero-card .result {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 0.9rem;
+      align-items: baseline;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-card .result:last-child { border-bottom: none; }
+    .hero-card .result .ic {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: var(--lavender);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--purple-deep);
+    }
+    .hero-card .result .meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.01em;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+    }
+    .hero-card .result .t {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      line-height: 1.4;
+    }
+
+    /* =====================================================================
+       Logo strip (бесконечная карусель — статичная плашка с плейсхолдерами)
+       ===================================================================== */
+    .strip {
+      padding: clamp(2rem, 3vw, 3rem) 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .strip .label {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.005em;
+    }
+    .strip .logos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    @media (min-width: 720px) {
+      .strip .logos { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 1020px) {
+      .strip .logos { grid-template-columns: repeat(6, 1fr); }
+    }
+    .strip .logo {
+      background: var(--bg);
+      padding: 1.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--muted);
+      letter-spacing: -0.01em;
+      min-height: 80px;
+    }
+
+    /* =====================================================================
+       Big intro section
+       ===================================================================== */
+    .intro {
+      padding: clamp(5rem, 10vw, 8rem) 0;
+    }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(2rem, 4vw, 4rem);
+      align-items: start;
+    }
+    @media (min-width: 920px) {
+      .intro-grid { grid-template-columns: 0.45fr 0.55fr; }
+    }
+
+    /* =====================================================================
+       Problem — dark card + numbered list
+       ===================================================================== */
+    .problem {
+      padding: clamp(3rem, 6vw, 5rem) 0 clamp(5rem, 10vw, 8rem);
+    }
+    .problem-card {
+      background: var(--ink);
+      color: var(--beige);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+    .problem-card .eyebrow { color: var(--lavender); }
+    .problem-card .eyebrow::before { background: var(--lavender); }
+    .problem-card h2 {
+      color: var(--beige);
+      margin: 1.75rem 0 2.25rem;
+      max-width: 22ch;
+    }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      border-top: 1px solid rgba(237,233,229,0.18);
+    }
+    @media (min-width: 720px) {
+      .problem-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .problem-grid .pp {
+      padding: 1.6rem 1.25rem 1.6rem 0;
+      border-bottom: 1px solid rgba(237,233,229,0.18);
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    @media (min-width: 720px) {
+      .problem-grid .pp:nth-child(odd) { padding-right: 2rem; border-right: 1px solid rgba(237,233,229,0.18); }
+      .problem-grid .pp:nth-child(even) { padding-left: 2rem; }
+    }
+    .problem-grid .pp .n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: rgba(237,233,229,0.55);
+      padding-top: 0.2rem;
+    }
+    .problem-grid .pp h4 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.1rem;
+      letter-spacing: -0.018em;
+      color: var(--beige);
+      margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+    .problem-grid .pp p {
+      font-size: 14.5px;
+      color: rgba(237,233,229,0.7);
+      line-height: 1.55;
+      max-width: 42ch;
+    }
+
+    /* =====================================================================
+       Solution — pastel lavender card + cycle list
+       ===================================================================== */
+    .solution {
+      padding: 0 0 clamp(5rem, 10vw, 8rem);
+    }
+    .solution-card {
+      background: var(--lavender);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+    .solution-card::after {
+      content: "";
+      position: absolute;
+      right: -10%;
+      bottom: -30%;
+      width: 50%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(148,120,252,0.45) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .solution-card .eyebrow { color: var(--purple-deep); }
+    .solution-card .eyebrow::before { background: var(--purple-deep); }
+    .solution-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(2rem, 4vw, 3.5rem);
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+    @media (min-width: 920px) {
+      .solution-grid { grid-template-columns: 0.45fr 0.55fr; }
+    }
+    .cycle {
+      background: var(--paper);
+      border-radius: var(--radius);
+      padding: 0.5rem 1.5rem;
+      border: 1px solid rgba(36,36,34,0.06);
+    }
+    .cycle .step {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      gap: 1rem;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+    }
+    .cycle .step:last-child { border-bottom: none; }
+    .cycle .step .n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .cycle .step .text {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+    .cycle .step .text span {
+      display: block;
+      margin-top: 0.2rem;
+      font-weight: 400;
+      font-size: 13.5px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+    }
+    .cycle .step .arr {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .cycle .step:last-child .arr { color: var(--purple); }
+
+    /* =====================================================================
+       Stats (как DJ "+65h saved per user...")
+       ===================================================================== */
+    .stats {
+      padding: clamp(5rem, 8vw, 7rem) 0;
+    }
+    .stats h2 { max-width: 22ch; margin-bottom: 3rem; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+    }
+    @media (min-width: 760px) {
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .stats-grid .stat {
+      padding: 2rem 1.75rem 2.25rem;
+      border-right: 1px solid var(--ink);
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stats-grid .stat:first-child { padding-left: 0; }
+    .stats-grid .stat:last-child { border-right: none; padding-right: 0; }
+    @media (max-width: 759px) {
+      .stats-grid .stat { padding-left: 0; padding-right: 0; }
+      .stats-grid .stat:nth-child(odd) { padding-right: 1.25rem; }
+      .stats-grid .stat:nth-child(even) { padding-left: 1.25rem; }
+      .stats-grid .stat:nth-child(2) { border-right: none; }
+      .stats-grid .stat:nth-child(1),
+      .stats-grid .stat:nth-child(2) { border-bottom: 1px solid var(--ink); }
+      .stats-grid .stat:nth-child(3),
+      .stats-grid .stat:nth-child(4) { padding-top: 2rem; }
+    }
+    .stats-grid .stat .v {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: clamp(3.5rem, 7vw, 6rem);
+      letter-spacing: -0.045em;
+      line-height: 0.95;
+      color: var(--ink);
+    }
+    .stats-grid .stat .v sup {
+      font-family: var(--font-mono);
+      font-size: 0.35em;
+      letter-spacing: 0;
+      vertical-align: top;
+      margin-left: 0.15em;
+      font-weight: 400;
+    }
+    .stats-grid .stat .d {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 22ch;
+      line-height: 1.5;
+      margin-top: 1.5rem;
+      letter-spacing: -0.005em;
+    }
+
+    /* =====================================================================
+       Inside (что внутри — простыми словами)
+       ===================================================================== */
+    .inside {
+      padding: clamp(5rem, 10vw, 8rem) 0;
+    }
+    .inside-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(2.5rem, 5vw, 4rem);
+      align-items: start;
+    }
+    @media (min-width: 920px) {
+      .inside-grid { grid-template-columns: 0.42fr 0.58fr; }
+    }
+    .inside-list {
+      border-top: 1px solid var(--ink);
+    }
+    .inside-list .row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 1.5rem;
+      padding: 1.6rem 0;
+      border-bottom: 1px solid var(--line);
+      align-items: baseline;
+    }
+    .inside-list .row .k {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+      padding-top: 0.25rem;
+    }
+    .inside-list .row .t {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: clamp(1.05rem, 1.4vw, 1.18rem);
+      letter-spacing: -0.018em;
+      color: var(--ink);
+      line-height: 1.4;
+      max-width: 60ch;
+    }
+    .inside-list .row .t span {
+      display: block;
+      margin-top: 0.4rem;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 14.5px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+      line-height: 1.55;
+    }
+
+    /* =====================================================================
+       Process timeline
+       ===================================================================== */
+    .process {
+      padding: 0 0 clamp(5rem, 10vw, 8rem);
+    }
+    .process-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 4vw, 4rem);
+    }
+    .process-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 2.5rem;
+    }
+    @media (min-width: 720px) {
+      .process-grid { grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    }
+    @media (min-width: 1020px) {
+      .process-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .process-grid .step {
+      background: var(--paper);
+      padding: 1.65rem 1.5rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 200px;
+    }
+    .process-grid .step .n {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--purple);
+      margin-bottom: 0.85rem;
+      letter-spacing: -0.005em;
+    }
+    .process-grid .step h4 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.18rem;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .process-grid .step p {
+      font-size: 14.5px;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 30ch;
+      letter-spacing: -0.005em;
+    }
+
+    /* =====================================================================
+       Testimonial
+       ===================================================================== */
+    .quote {
+      padding: clamp(5rem, 8vw, 7rem) 0;
+    }
+    .quote-card {
+      background: var(--beige-deep);
+      border-radius: var(--radius-lg);
+      padding: clamp(3rem, 6vw, 5.5rem) clamp(2rem, 5vw, 4rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .quote-card::before {
+      content: "\201C";
+      position: absolute;
+      top: clamp(0.5rem, 2vw, 1.5rem);
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(8rem, 16vw, 13rem);
+      line-height: 1;
+      color: var(--ink);
+      opacity: 0.07;
+      pointer-events: none;
+      user-select: none;
+    }
+    .quote-card > * {
+      position: relative;
+      z-index: 1;
+    }
+    .quote-card blockquote {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+      font-size: clamp(1.45rem, 2.6vw, 2.25rem);
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      max-width: 32ch;
+      margin: 2rem auto 2.5rem;
+    }
+    .quote-card cite {
+      font-style: normal;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .quote-card cite::before {
+      content: "";
+      display: block;
+      width: 40px;
+      height: 1px;
+      background: var(--line-strong);
+      margin-bottom: 1.25rem;
+    }
+    .quote-card cite strong {
+      display: block;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.015em;
+    }
+
+    /* =====================================================================
+       Final CTA
+       ===================================================================== */
+    .cta-final {
+      padding: 0 0 clamp(4rem, 6vw, 6rem);
+    }
+    .cta-final-card {
+      background: var(--ink);
+      color: var(--beige);
+      border-radius: var(--radius-lg);
+      padding: clamp(3rem, 6vw, 5.5rem) clamp(2.5rem, 5vw, 4.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-final-card::after {
+      content: "";
+      position: absolute;
+      right: -15%;
+      bottom: -40%;
+      width: 60%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(148,120,252,0.2) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .cta-final-card .eyebrow { color: var(--lavender); }
+    .cta-final-card .eyebrow::before { background: var(--lavender); }
+    .cta-final-card h2 {
+      color: var(--beige);
+      max-width: 16ch;
+      margin: 1.75rem 0 2rem;
+    }
+    .cta-final-card .lead { color: rgba(237,233,229,0.72); }
+    .cta-final-card .actions {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      margin-top: 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =====================================================================
+       Footer
+       ===================================================================== */
+    footer.foot {
+      border-top: 1px solid var(--line);
+      padding: clamp(3rem, 5vw, 4rem) 0 clamp(2.5rem, 4vw, 3.5rem);
+    }
+    .foot-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+    @media (min-width: 760px) {
+      .foot-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
+    }
+    .foot h5 {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+      margin-bottom: 1rem;
+      font-weight: 400;
+    }
+    .foot ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .foot ul a {
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .foot ul a:hover { color: var(--purple-deep); }
+    .foot .copy {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: space-between;
+      letter-spacing: -0.005em;
+    }
+
+    /* =====================================================================
+       Section headings shared
+       ===================================================================== */
+    .sec-header {
+      margin-bottom: clamp(2.5rem, 4vw, 3.5rem);
+    }
+    .sec-header .eyebrow { margin-bottom: 1.5rem; }
+    .sec-header h2 { max-width: 22ch; }
+
+    /* =====================================================================
+       Small util
+       ===================================================================== */
+    .row-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.75rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      max-width: 640px;
+    }
+    .row-meta .m {
+      flex: 1 1 140px;
+    }
+    .row-meta .k {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      letter-spacing: -0.005em;
+    }
+    .row-meta .v {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--ink);
+      letter-spacing: -0.015em;
+    }
+
+    /* =====================================================================
+       Trust strip — categories of sources (override)
+       ===================================================================== */
+    .strip .label {
+      text-align: left;
+      max-width: 60ch;
+      margin-bottom: 1.5rem;
+    }
+    .strip .logos {
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) { .strip .logos { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1020px) { .strip .logos { grid-template-columns: repeat(3, 1fr); } }
+    .strip .logo {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      font-family: var(--font-sans);
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--ink);
+      letter-spacing: -0.018em;
+      min-height: 130px;
+      padding: 1.5rem 1.25rem;
+      text-align: left;
+    }
+    .strip .logo .desc {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: -0.005em;
+      line-height: 1.45;
+      text-transform: lowercase;
+    }
+
+    /* =====================================================================
+       Brief — manifesto, 4 cards (sources / topics / formats / tone)
+       ===================================================================== */
+    .brief { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .brief-card {
+      background: var(--lavender-pale);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+    .brief-card::after {
+      content: "";
+      position: absolute;
+      right: -10%;
+      top: -40%;
+      width: 45%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(148,120,252,0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .brief-card .header {
+      max-width: 60ch;
+      position: relative;
+      z-index: 1;
+    }
+    .brief-card .header h2 { margin-top: 1.5rem; }
+    .brief-card .header p {
+      margin-top: 1.25rem;
+      color: var(--ink-2);
+    }
+    .brief-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    @media (min-width: 720px) { .brief-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1020px) { .brief-grid { grid-template-columns: repeat(4, 1fr); } }
+    .brief-grid .b {
+      background: var(--paper);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.4rem 1.6rem;
+      border: 1px solid rgba(36,36,34,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 220px;
+    }
+    .brief-grid .b .n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--purple);
+      letter-spacing: -0.005em;
+      margin-bottom: 0.4rem;
+    }
+    .brief-grid .b h4 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.18rem;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      margin-bottom: 0.4rem;
+      line-height: 1.2;
+    }
+    .brief-grid .b p {
+      font-size: 14.5px;
+      color: var(--muted);
+      line-height: 1.55;
+      letter-spacing: -0.005em;
+    }
+
+    /* =====================================================================
+       Formats library — 15 cards
+       ===================================================================== */
+    .formats { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .formats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 2.5rem;
+    }
+    @media (min-width: 720px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1020px) { .formats-grid { grid-template-columns: repeat(3, 1fr); } }
+    .formats-grid .fmt {
+      background: var(--paper);
+      padding: 1.5rem 1.35rem 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      min-height: 170px;
+    }
+    .formats-grid .fmt .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+    .formats-grid .fmt h4 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.05rem;
+      letter-spacing: -0.022em;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .formats-grid .fmt .len {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--purple);
+      white-space: nowrap;
+      letter-spacing: -0.005em;
+    }
+    .formats-grid .fmt p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+      letter-spacing: -0.005em;
+    }
+    .formats-foot {
+      margin-top: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+      max-width: 60ch;
+    }
+
+    /* =====================================================================
+       Rhythm — schedule (dark card)
+       ===================================================================== */
+    .rhythm { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .rhythm-card {
+      background: var(--ink);
+      color: var(--beige);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+    .rhythm-card .eyebrow { color: var(--lavender); }
+    .rhythm-card .eyebrow::before { background: var(--lavender); }
+    .rhythm-card h2 { color: var(--beige); max-width: 24ch; }
+    .rhythm-card .lead { color: rgba(237,233,229,0.78); max-width: 56ch; margin-top: 1.25rem; }
+    .rhythm-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      margin-top: 2.5rem;
+      border-top: 1px solid rgba(237,233,229,0.18);
+    }
+    @media (min-width: 720px) {
+      .rhythm-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1020px) {
+      .rhythm-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .rhythm-grid .col {
+      padding: 1.6rem 1.5rem 1.75rem 0;
+      border-bottom: 1px solid rgba(237,233,229,0.18);
+    }
+    @media (min-width: 720px) {
+      .rhythm-grid .col {
+        padding-right: 1.5rem;
+        border-right: 1px solid rgba(237,233,229,0.18);
+      }
+      .rhythm-grid .col:nth-child(2n) { border-right: none; padding-right: 0; }
+      .rhythm-grid .col:nth-child(2n+1) { padding-left: 0; }
+    }
+    @media (min-width: 1020px) {
+      .rhythm-grid .col {
+        padding: 1.7rem 1.5rem 1.9rem;
+        border-right: 1px solid rgba(237,233,229,0.18);
+      }
+      .rhythm-grid .col:nth-child(2n) { border-right: 1px solid rgba(237,233,229,0.18); padding-right: 1.5rem; }
+      .rhythm-grid .col:first-child { padding-left: 0; }
+      .rhythm-grid .col:last-child { border-right: none; padding-right: 0; }
+    }
+    .rhythm-grid .col .head {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--lavender);
+      letter-spacing: -0.005em;
+      margin-bottom: 1rem;
+      text-transform: lowercase;
+    }
+    .rhythm-grid .col h4 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.15rem;
+      color: var(--beige);
+      margin-bottom: 0.85rem;
+      letter-spacing: -0.022em;
+      line-height: 1.2;
+    }
+    .rhythm-grid .col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .rhythm-grid .col li {
+      font-size: 13.5px;
+      color: rgba(237,233,229,0.72);
+      line-height: 1.5;
+      padding-left: 1rem;
+      position: relative;
+      letter-spacing: -0.005em;
+    }
+    .rhythm-grid .col li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      background: var(--lavender);
+      border-radius: 50%;
+    }
+    .rhythm-grid .col li strong {
+      display: block;
+      font-weight: 400;
+      color: var(--beige);
+      font-size: 14.5px;
+      margin-bottom: 0.15rem;
+      letter-spacing: -0.012em;
+    }
+    .rhythm-foot {
+      margin-top: 2rem;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: rgba(237,233,229,0.6);
+      letter-spacing: -0.005em;
+      max-width: 64ch;
+    }
+
+    /* =====================================================================
+       Engagement — 3 cards
+       ===================================================================== */
+    .engage { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .engage-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    @media (min-width: 920px) { .engage-grid { grid-template-columns: repeat(3, 1fr); } }
+    .engage-grid .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.75rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      min-height: 280px;
+    }
+    .engage-grid .card .n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--purple);
+      letter-spacing: -0.005em;
+      margin-bottom: 0.5rem;
+    }
+    .engage-grid .card h4 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.3rem;
+      line-height: 1.2;
+    }
+    .engage-grid .card p {
+      font-size: 14.5px;
+      color: var(--muted);
+      line-height: 1.55;
+      letter-spacing: -0.005em;
+    }
+    .engage-grid .card .when {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink);
+      background: var(--beige-soft);
+      border: 1px solid var(--line);
+      padding: 0.32rem 0.7rem;
+      border-radius: 999px;
+      align-self: flex-start;
+      margin-top: auto;
+      letter-spacing: -0.005em;
+      text-transform: lowercase;
+    }
+
+    /* =====================================================================
+       Analytics — lavender card with weekly report mockup
+       ===================================================================== */
+    .analytics { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .analytics-card {
+      background: var(--lavender);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+    .analytics-card::after {
+      content: "";
+      position: absolute;
+      left: -10%;
+      top: -30%;
+      width: 50%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(148,120,252,0.45) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .analytics-card .eyebrow { color: var(--purple-deep); }
+    .analytics-card .eyebrow::before { background: var(--purple-deep); }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      position: relative;
+      z-index: 1;
+      align-items: start;
+    }
+    @media (min-width: 920px) { .analytics-grid { grid-template-columns: 0.55fr 0.45fr; } }
+    .metric-bullets { display: grid; gap: 0; margin-top: 2rem; }
+    .metric-bullets .b {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      padding: 1rem 0;
+      border-top: 1px solid rgba(36,36,34,0.18);
+    }
+    .metric-bullets .b:last-child { border-bottom: 1px solid rgba(36,36,34,0.18); }
+    .metric-bullets .b .ic {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--purple-deep);
+      background: var(--paper);
+      border: 1px solid rgba(36,36,34,0.1);
+      border-radius: 6px;
+      padding: 3px 0;
+      text-align: center;
+    }
+    .metric-bullets .b .t {
+      font-size: 15.5px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.018em;
+      line-height: 1.35;
+    }
+    .metric-bullets .b .t span {
+      display: block;
+      margin-top: 0.25rem;
+      font-weight: 400;
+      font-size: 13.5px;
+      color: var(--ink-2);
+      letter-spacing: -0.005em;
+      line-height: 1.5;
+    }
+    .report {
+      background: var(--paper);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.5rem 1.75rem;
+      border: 1px solid rgba(36,36,34,0.06);
+    }
+    .report .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      letter-spacing: -0.005em;
+    }
+    .report .topline .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--purple);
+      border-radius: 50%;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+    .report h5 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 1rem;
+    }
+    .report .line {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 0.75rem;
+      padding: 0.55rem 0;
+      border-top: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      letter-spacing: -0.005em;
+    }
+    .report .line .k { color: var(--muted); }
+    .report .line .v { color: var(--ink); }
+    .report .line .v em {
+      font-style: normal;
+      color: var(--purple-deep);
+      font-weight: 500;
+    }
+
+    /* =====================================================================
+       Scaling — paper card with 4-step list
+       ===================================================================== */
+    .scaling { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .scaling-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+    }
+    .scaling-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      align-items: start;
+      margin-top: 1rem;
+    }
+    @media (min-width: 920px) { .scaling-grid { grid-template-columns: 0.45fr 0.55fr; } }
+    .scaling-list {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--ink);
+    }
+    .scaling-list .row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 1rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--line);
+      align-items: baseline;
+    }
+    .scaling-list .row .n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--purple);
+      letter-spacing: -0.005em;
+    }
+    .scaling-list .row .t {
+      font-size: 15.5px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.018em;
+      line-height: 1.35;
+    }
+    .scaling-list .row .t span {
+      display: block;
+      margin-top: 0.3rem;
+      font-weight: 400;
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.55;
+      letter-spacing: -0.005em;
+    }
+    .scaling-list .row .pill {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--purple-deep);
+      background: var(--lavender-pale);
+      border: 1px solid var(--lavender);
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      letter-spacing: -0.005em;
+    }
+
+    /* =====================================================================
+       Principles — replaces placeholder testimonial
+       ===================================================================== */
+    .principles { padding: clamp(5rem, 8vw, 7rem) 0; }
+    .principles-card {
+      background: var(--beige-deep);
+      border-radius: var(--radius-lg);
+      padding: clamp(2.5rem, 5vw, 4.5rem);
+    }
+    .principles-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      margin-top: 2.5rem;
+    }
+    @media (min-width: 760px) { .principles-grid { grid-template-columns: repeat(3, 1fr); } }
+    .principles-grid .p {
+      border-top: 1px solid rgba(36,36,34,0.18);
+      padding-top: 1.5rem;
+    }
+    .principles-grid .p .n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--purple-deep);
+      margin-bottom: 1rem;
+      letter-spacing: -0.005em;
+    }
+    .principles-grid .p h4 {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+      font-size: clamp(1.4rem, 2.4vw, 1.75rem);
+      letter-spacing: -0.025em;
+      color: var(--ink);
+      line-height: 1.18;
+      margin-bottom: 0.85rem;
+    }
+    .principles-grid .p p {
+      font-size: 14.5px;
+      color: var(--ink-2);
+      line-height: 1.55;
+      letter-spacing: -0.005em;
+    }
+
+    /* =====================================================================
+       CTA-final — extended "что входит"
+       ===================================================================== */
+    .cta-final-card .included {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(237,233,229,0.18);
+      position: relative;
+      z-index: 1;
+    }
+    @media (min-width: 720px) {
+      .cta-final-card .included { grid-template-columns: 1fr 1fr; gap: 3rem; }
+    }
+    .cta-final-card .included h5 {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--lavender);
+      letter-spacing: -0.005em;
+      margin-bottom: 1rem;
+      font-weight: 400;
+    }
+    .cta-final-card .included ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .cta-final-card .included li {
+      font-size: 14.5px;
+      color: rgba(237,233,229,0.85);
+      line-height: 1.5;
+      padding-left: 1.1rem;
+      position: relative;
+      letter-spacing: -0.005em;
+    }
+    .cta-final-card .included li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      background: var(--lavender);
+      border-radius: 50%;
+    }
+
+    /* =====================================================================
+       Hero card v2 — config-style preview
+       ===================================================================== */
+    .hero-card .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.25rem;
+    }
+    .hero-card .pill {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--purple-deep);
+      background: var(--lavender-pale);
+      border: 1px solid var(--lavender);
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      letter-spacing: -0.005em;
+      text-transform: lowercase;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Announcement bar -->
+  <div class="announce">
+    Новый формат: ИИ-редакция для Telegram под ключ. <a href="#offer">Узнать подробнее →</a>
+  </div>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top">
+        <span class="mark"></span>
+        Редакция<span style="font-weight:400; color:var(--muted);">/ИИ</span>
+      </a>
+      <nav class="topnav" aria-label="Разделы">
+        <a href="#brief">Под ваш бриф</a>
+        <a href="#solution">Решение</a>
+        <a href="#formats">Форматы</a>
+        <a href="#rhythm">Ритм</a>
+        <a href="#offer">Оффер</a>
+      </nav>
+      <div class="top-actions">
+        <a class="btn btn-ghost" href="#offer" style="padding:0.65rem 1.1rem; font-size:14px;">Связаться <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">что такое редакция/ии</div>
+          <h1 class="display-xl">
+            Telegram-канал, который работает <em>как редакция</em>, а не как ручной постинг.
+          </h1>
+          <p class="lead xl">
+            Замкнутый контур: материалы из выбранных источников превращаются в уникальные посты,
+            публикуются по расписанию, вовлекают аудиторию опросами и рубриками,
+            а данные о просмотрах возвращаются в систему как рекомендации.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="#offer">Обсудить пилот <span class="arrow">→</span></a>
+            <a class="btn btn-ghost" href="#problem">Смотреть проблему</a>
+          </div>
+        </div>
+
+        <!-- Hero card — превью «дня редакции», без бизнес-привязки -->
+        <div class="hero-card" aria-hidden="true">
+          <div class="topline">
+            <span>// конфигурация канала</span>
+            <span style="color: var(--purple);">● 24/7</span>
+          </div>
+          <div class="query">Сегодняшний слот · 16:00</div>
+          <div class="results">
+            <div class="result">
+              <span class="ic">F</span>
+              <div>
+                <div class="meta">формат · из первых рук</div>
+                <div class="t">Сцена → мост к сути → вывод</div>
+                <div class="pill-row">
+                  <span class="pill">180 слов</span>
+                  <span class="pill">тон бренда</span>
+                  <span class="pill">источники: ваши</span>
+                </div>
+              </div>
+            </div>
+            <div class="result">
+              <span class="ic">Q</span>
+              <div>
+                <div class="meta">формат · дилемма</div>
+                <div class="t">Опрос на 3 варианта · среда 18:00</div>
+                <div class="pill-row">
+                  <span class="pill">опрос</span>
+                  <span class="pill">еженедельно</span>
+                </div>
+              </div>
+            </div>
+            <div class="result">
+              <span class="ic">D</span>
+              <div>
+                <div class="meta">формат · дайджест</div>
+                <div class="t">Подборка недели + AI-обложка · пт 20:00</div>
+                <div class="pill-row">
+                  <span class="pill">визуал</span>
+                  <span class="pill">еженедельно</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust strip — категории источников, не бренды -->
+  <section class="strip" aria-label="Источники под бриф">
+    <div class="wrap">
+      <div class="label">Источники подбираются под повестку бренда — любая комбинация из шести типов корпусов.</div>
+      <div class="logos">
+        <div class="logo">
+          Глобальные деловые медиа
+          <span class="desc">бизнес, экономика, рынки</span>
+        </div>
+        <div class="logo">
+          Аналитические центры
+          <span class="desc">консалтинг, исследования, MBA-школы</span>
+        </div>
+        <div class="logo">
+          Венчур и технологии
+          <span class="desc">стартапы, фонды, deep tech</span>
+        </div>
+        <div class="logo">
+          Региональная пресса
+          <span class="desc">запад · gcc · снг — на выбор</span>
+        </div>
+        <div class="logo">
+          Нишевые блоги и рассылки
+          <span class="desc">эксперты, отраслевые редакции</span>
+        </div>
+        <div class="logo">
+          Ваши собственные источники
+          <span class="desc">rss · telegram · api · корп. блоги</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTRO — what's the product -->
+  <section class="intro" id="about">
+    <div class="wrap">
+      <div class="intro-grid">
+        <div>
+          <div class="eyebrow">что это</div>
+          <div style="height: 1.5rem;"></div>
+          <h2 class="display-l">Единая платформа, которая знает <em>всё, что знает</em> ваш канал.</h2>
+        </div>
+        <div>
+          <p class="lead xl">
+            Сделано инженерами и контент-практиками. Мы переосмысляем,
+            как медиа-команды собирают, перерабатывают и публикуют свои материалы —
+            раскрывая глубину источников и характер бренда в каждом посте.
+          </p>
+          <div class="row-meta">
+            <div class="m"><div class="k">Формат</div><div class="v">Канал + админ-бот</div></div>
+            <div class="m"><div class="k">Запуск</div><div class="v">Под ключ за 1–2 дня</div></div>
+            <div class="m"><div class="k">Поддержка</div><div class="v">Ежемесячная</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRIEF — manifesto: всё под ваш бриф -->
+  <section class="brief" id="brief">
+    <div class="wrap">
+      <div class="brief-card">
+        <div class="header">
+          <div class="eyebrow">не универсальный канал</div>
+          <h2 class="display-l">Источники, темы, форматы и тон — <em>собираются под ваш бриф.</em></h2>
+          <p class="lead">
+            Платформа — конфигурируемое ядро. Ваш канал — отдельный продукт со своей повесткой,
+            аудиторией и характером. Никакого «общего на всех»: каждое решение фиксируется
+            в конфигурации и держится последовательно от поста к посту.
+          </p>
+        </div>
+        <div class="brief-grid">
+          <div class="b">
+            <div class="n">01 / Источники</div>
+            <h4>Любая комбинация корпусов</h4>
+            <p>
+              Подключаем 30+ настраиваемых источников: бизнес-медиа, аналитические центры,
+              отраслевые блоги, региональная пресса, ваши собственные RSS и Telegram-каналы.
+            </p>
+          </div>
+          <div class="b">
+            <div class="n">02 / Темы</div>
+            <h4>90+ ключевых слов</h4>
+            <p>
+              Фильтр настраивается под повестку бренда. Любую тему можно включить, выключить
+              или приоритизировать. Алгоритм диверсификации не даёт двух статей подряд из одного источника.
+            </p>
+          </div>
+          <div class="b">
+            <div class="n">03 / Форматы</div>
+            <h4>Библиотека из 15 форматов</h4>
+            <p>
+              От «факта дня» до «разбора кейса» и «открытого письма». Любой формат можно выключить.
+              Алгоритм чередует форматы и не повторяет последние пять.
+            </p>
+          </div>
+          <div class="b">
+            <div class="n">04 / Тон</div>
+            <h4>От инженерного до ироничного</h4>
+            <p>
+              Тон фиксируется в конфиге: лексика, длина, структура, призыв к действию.
+              Один раз настроили — он держится во всех постах, рубриках и опросах.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM — dark card -->
+  <section class="problem" id="problem">
+    <div class="wrap">
+      <div class="problem-card">
+        <div class="eyebrow">ваш общий труд — ваш уникальный актив</div>
+        <h2 class="display-l">Но вручную регулярную <em>редакцию не масштабировать.</em></h2>
+        <p class="lead" style="color: rgba(237,233,229,0.78); max-width: 60ch; margin-bottom: 3rem;">
+          Один и тот же поток новостей без своей подачи быстро становится фоном.
+          Команда выгорает на регулярности 3–4 поста в день, тон плывёт,
+          метрики живут отдельно от решений.
+        </p>
+
+        <div class="problem-grid">
+          <div class="pp">
+            <div class="n">01</div>
+            <div>
+              <h4>Высокая стоимость времени команды</h4>
+              <p>Сбор, переписывание, согласование, ручная публикация — всё съедает часы редакторов.</p>
+            </div>
+          </div>
+          <div class="pp">
+            <div class="n">02</div>
+            <div>
+              <h4>Регулярность ломается первой</h4>
+              <p>Несколько постов в день каждый день — почти всегда означает выгорание или паузы.</p>
+            </div>
+          </div>
+          <div class="pp">
+            <div class="n">03</div>
+            <div>
+              <h4>Однообразие и «шум»</h4>
+              <p>Без редакционной формулы и форматов посты сливаются в общий поток.</p>
+            </div>
+          </div>
+          <div class="pp">
+            <div class="n">04</div>
+            <div>
+              <h4>Контроль рассыпан по чатам</h4>
+              <p>Расписание, очередь, тон, источники — везде по-разному, у разных людей.</p>
+            </div>
+          </div>
+          <div class="pp">
+            <div class="n">05</div>
+            <div>
+              <h4>Нет системной обратной связи</h4>
+              <p>Реакции и просмотры не превращаются в решения о темах и времени публикации.</p>
+            </div>
+          </div>
+          <div class="pp">
+            <div class="n">06</div>
+            <div>
+              <h4>Каждый новый канал — заново</h4>
+              <p>Без конфигурируемого ядра запуск второго канала превращается в новый проект.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION — lavender card -->
+  <section class="solution" id="solution">
+    <div class="wrap">
+      <div class="solution-card">
+        <div class="solution-grid">
+          <div>
+            <div class="eyebrow">решайте так, как думаете</div>
+            <div style="height: 1.5rem;"></div>
+            <h2 class="display-l">Замкнутый цикл — <em>контент, расписание,</em> вовлечение, аналитика.</h2>
+            <p class="lead" style="margin-top: 1.5rem; color: var(--ink);">
+              Платформа сама собирает материалы, фильтрует по тематике, пишет уникальные посты в нескольких форматах,
+              ведёт календарь рубрик и опросов, а в конце недели возвращает короткий отчёт с рекомендациями.
+            </p>
+          </div>
+          <div class="cycle">
+            <div class="step">
+              <span class="n">01</span>
+              <span class="text">Сбор материалов
+                <span>Заданные источники по темам и регионам.</span>
+              </span>
+              <span class="arr">↓</span>
+            </div>
+            <div class="step">
+              <span class="n">02</span>
+              <span class="text">Фильтр и анти-монотонность
+                <span>Только релевантное, без подряд из одного источника.</span>
+              </span>
+              <span class="arr">↓</span>
+            </div>
+            <div class="step">
+              <span class="n">03</span>
+              <span class="text">Очередь черновиков
+                <span>Можно править, перегенерить, удалять до публикации.</span>
+              </span>
+              <span class="arr">↓</span>
+            </div>
+            <div class="step">
+              <span class="n">04</span>
+              <span class="text">Канал + рубрики и опросы
+                <span>Публикация по расписанию, вовлечение аудитории.</span>
+              </span>
+              <span class="arr">↓</span>
+            </div>
+            <div class="step">
+              <span class="n">05</span>
+              <span class="text">Метрики → рекомендации
+                <span>Что усилить, что убрать, когда лучше публиковать.</span>
+              </span>
+              <span class="arr">●</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMATS — библиотека форматов -->
+  <section class="formats" id="formats">
+    <div class="wrap">
+      <div class="sec-header">
+        <div class="eyebrow">пятнадцать редакционных форматов</div>
+        <div style="height: 1.5rem;"></div>
+        <h2 class="display-l">Канал не звучит одинаково — <em>каждый день в новом ракурсе.</em></h2>
+        <p class="lead" style="margin-top: 1.5rem;">
+          Библиотека форматов — это паттерны подачи: длина, структура, риторика, тип развязки.
+          Любой формат можно выключить под бренд, любой — добавить под запрос.
+        </p>
+      </div>
+      <div class="formats-grid">
+        <div class="fmt">
+          <div class="head"><h4>Факт дня</h4><span class="len">50–80 слов</span></div>
+          <p>Ударная цифра + короткий комментарий с характером.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Из первых рук</h4><span class="len">150–200 слов</span></div>
+          <p>Сцена → мост к сути → авторский вывод.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Разбор кейса</h4><span class="len">300–400 слов</span></div>
+          <p>Глубокий анализ с цифрами и параллелями к смежным историям.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Против течения</h4><span class="len">100–150 слов</span></div>
+          <p>Провокативный тезис вразрез с мейнстримом — с аргументом.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>3 вывода</h4><span class="len">120–180 слов</span></div>
+          <p>Новость + три авторские интерпретации, чтобы было о чём думать.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Вопрос на подумать</h4><span class="len">60–100 слов</span></div>
+          <p>Факт + открытый вопрос читателю. Запускает обсуждение.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Цифры говорят</h4><span class="len">100–150 слов</span></div>
+          <p>2–3 цифры, выстроенные в нарратив, а не сухая инфографика.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>За кулисами</h4><span class="len">250–350 слов</span></div>
+          <p>Что реально стоит за заголовком — «перевод с корпоративного на человеческий».</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Прогноз</h4><span class="len">150–200 слов</span></div>
+          <p>Конкретный прогноз на 6–24 месяца с обоснованием.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Миф vs Реальность</h4><span class="len">120–170 слов</span></div>
+          <p>Разоблачение расхожего мнения цифрами и контрпримерами.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Книжная полка</h4><span class="len">150–220 слов</span></div>
+          <p>Связь новости с книгой, исследованием или научной работой.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Открытое письмо</h4><span class="len">130–180 слов</span></div>
+          <p>Обращение к конкретной аудитории — с позицией и интонацией.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Было / Стало</h4><span class="len">150–200 слов</span></div>
+          <p>Сравнение «5–10 лет назад» и «сейчас» — что изменилось и почему.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Один сюжет — три ракурса</h4><span class="len">200–250 слов</span></div>
+          <p>Одна тема в разных рынках или контекстах — с короткими выводами.</p>
+        </div>
+        <div class="fmt">
+          <div class="head"><h4>Урок из фреймворка</h4><span class="len">180–250 слов</span></div>
+          <p>Связь новости со стратегической или академической моделью.</p>
+        </div>
+      </div>
+      <div class="formats-foot">
+        // алгоритм чередования не повторяет последние 5 форматов · короткие — утром, длинные — вечером · форматы можно отключать в админке
+      </div>
+    </div>
+  </section>
+
+  <!-- RHYTHM — расписание -->
+  <section class="rhythm" id="rhythm">
+    <div class="wrap">
+      <div class="rhythm-card">
+        <div class="eyebrow">ритм канала</div>
+        <div style="height: 1.5rem;"></div>
+        <h2 class="display-l">Канал живёт по расписанию, <em>а не по настроению.</em></h2>
+        <p class="lead">
+          Ежедневные слоты, недельные ритуалы, ежемесячные обзоры — всё работает 24/7
+          без ручной публикации. Любой день, час и формат рубрик можно перенастроить под бренд.
+        </p>
+
+        <div class="rhythm-grid">
+          <div class="col">
+            <div class="head">// ежедневно · 4 слота</div>
+            <h4>Каждый день</h4>
+            <ul>
+              <li><strong>Утро · короткий формат</strong>факт, цифра, вопрос на подумать</li>
+              <li><strong>День · обычный пост</strong>среднее по длине, сменный формат</li>
+              <li><strong>Вечер · аналитика</strong>разбор, прогноз, миф vs реальность</li>
+              <li><strong>Ночь · длинный формат</strong>за кулисами, книжная полка</li>
+            </ul>
+          </div>
+          <div class="col">
+            <div class="head">// еженедельно · 3 ритуала</div>
+            <h4>Каждую неделю</h4>
+            <ul>
+              <li><strong>Среда · дилемма</strong>пост-ситуация + опрос на 3–4 варианта</li>
+              <li><strong>Пятница · дайджест</strong>подборка лучшего за неделю + AI-обложка</li>
+              <li><strong>Воскресенье · кураторская</strong>авторская подборка с комментарием</li>
+            </ul>
+          </div>
+          <div class="col">
+            <div class="head">// раз в две недели</div>
+            <h4>Каждые 14 дней</h4>
+            <ul>
+              <li><strong>1-е и 15-е · разбор кейса</strong>реалистичный сюжет с фреймворками и приглашением поделиться своим</li>
+            </ul>
+          </div>
+          <div class="col">
+            <div class="head">// ежемесячно · 2 события</div>
+            <h4>Каждый месяц</h4>
+            <ul>
+              <li><strong>15-е · Strategy Диалог</strong>3 опроса подряд + итоговый пост</li>
+              <li><strong>28-е · обзор месяца</strong>глубокий разбор главной темы</li>
+            </ul>
+          </div>
+        </div>
+        <div class="rhythm-foot">
+          // итого ~120 постов · ~6 опросов · 4 дайджеста · 4 кураторских подборки · 2 разбора кейсов · Strategy Диалог · обзор месяца — на типовой конфигурации
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENGAGE — вовлечение -->
+  <section class="engage" id="engage">
+    <div class="wrap">
+      <div class="sec-header">
+        <div class="eyebrow">вовлечение, а не вещание</div>
+        <div style="height: 1.5rem;"></div>
+        <h2 class="display-l">Подписчик — <em>участник, а не зритель.</em></h2>
+        <p class="lead" style="margin-top: 1.5rem;">
+          Три встроенные механики, которые превращают чтение в обсуждение
+          и возвращают читателя в канал — без ручной модерации.
+        </p>
+      </div>
+      <div class="engage-grid">
+        <div class="card">
+          <div class="n">01 / Дилемма</div>
+          <h4>Пост-ситуация + опрос</h4>
+          <p>
+            Реалистичный сюжет с понятным выбором. Текст с авторской подачей,
+            следом — опрос на 3–4 варианта. Подписчики голосуют и спорят в комментариях.
+          </p>
+          <span class="when">каждую среду · 18:00</span>
+        </div>
+        <div class="card">
+          <div class="n">02 / Strategy Диалог</div>
+          <h4>Серия опросов с итогом</h4>
+          <p>
+            Три опроса подряд — что ценно, где усилить, что сократить. Итоговый пост
+            с благодарностью и запросом обратной связи. Результаты влияют на конфигурацию следующего месяца.
+          </p>
+          <span class="when">15-е число · 12:00</span>
+        </div>
+        <div class="card">
+          <div class="n">03 / Разбор кейса</div>
+          <h4>Реалистичная история + приглашение</h4>
+          <p>
+            Сюжет «как будто от подписчика», анализ с фреймворками, финальный призыв:
+            «были в похожей ситуации? напишите — разберём вместе».
+          </p>
+          <span class="when">1-е и 15-е · 14:00</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats" id="stats">
+    <div class="wrap">
+      <div class="sec-header">
+        <div class="eyebrow">предсказуемо, а не случайно</div>
+        <div style="height: 1.5rem;"></div>
+        <h2 class="display-l">Цифры, на которые можно опираться <em>уже на старте.</em></h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="v">+120<sup>п</sup></div>
+          <div class="d">постов в месяц на типовом расписании 4 слота в день</div>
+        </div>
+        <div class="stat">
+          <div class="v">14<sup>+</sup></div>
+          <div class="d">редакционных форматов с автологикой чередования</div>
+        </div>
+        <div class="stat">
+          <div class="v">1–2<sup>д</sup></div>
+          <div class="d">на запуск нового канала после готовности доступов</div>
+        </div>
+        <div class="stat">
+          <div class="v">24/7</div>
+          <div class="d">контур работает без выходных и без ручной публикации</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSIDE -->
+  <section class="inside" id="inside">
+    <div class="wrap">
+      <div class="inside-grid">
+        <div>
+          <div class="eyebrow">что под капотом</div>
+          <div style="height: 1.5rem;"></div>
+          <h2 class="display-l">Что делает платформа — <em>простыми словами.</em></h2>
+          <p class="lead" style="margin-top: 1.5rem;">
+            Мы не продаём «технологии». Мы отвечаем за то, чтобы канал жил —
+            а внутри собрано всё, что для этого нужно.
+          </p>
+        </div>
+        <div class="inside-list">
+          <div class="row">
+            <div class="k">Тексты</div>
+            <div class="t">Пишем уникальные посты в заданных форматах, тоне и длине
+              <span>Каждый пост со своим характером, не «копипаст из ленты».</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Картинки</div>
+            <div class="t">Генерируем обложки и иллюстрации к спец-рубрикам и дайджестам
+              <span>Под общий визуальный стиль канала.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Telegram</div>
+            <div class="t">Публикация в канал, опросы и комментарии — всё внутри Telegram
+              <span>Канал, бот публикации, бот аналитики. Никаких веб-панелей и сторонних кабинетов.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Админ-панель</div>
+            <div class="t">Полное управление прямо в Telegram-боте
+              <span>Очередь черновиков (перегенерить / редактировать / удалить / опубликовать), включение и выключение источников, форматов и ключевых слов, ручной запуск опросов и дайджеста, пауза публикаций. Доступ — по Telegram user_id, можно несколько админов.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Метрики</div>
+            <div class="t">Просмотры, реакции и пересылки снимаются автоматически
+              <span>Через MTProto API напрямую из Telegram. Без сторонних счётчиков, без ручных таблиц.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Расписание</div>
+            <div class="t">Календарь публикаций и рубрик работает 24/7
+              <span>Ежедневные слоты, недельные рубрики, ежемесячные обзоры — всё в одном месте.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Хранилище</div>
+            <div class="t">Очередь черновиков, история публикаций и метрик — внутри
+              <span>В любой момент можно вернуться к посту и посмотреть его результат.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Развёртывание</div>
+            <div class="t">Решение упаковано как Docker-продукт и ставится на отдельный сервер
+              <span>На нашей инфраструктуре или на инфраструктуре заказчика — на выбор. Каналы изолированы друг от друга.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYTICS — еженедельный AI-отчёт -->
+  <section class="analytics" id="analytics">
+    <div class="wrap">
+      <div class="analytics-card">
+        <div class="analytics-grid">
+          <div>
+            <div class="eyebrow">аналитика и обратная связь</div>
+            <div style="height: 1.5rem;"></div>
+            <h2 class="display-l">Решения о темах принимает <em>не интуиция,</em> а данные канала.</h2>
+            <p class="lead" style="margin-top: 1.5rem; color: var(--ink);">
+              Просмотры, реакции и пересылки снимаются с каждого поста.
+              Раз в неделю система собирает короткий отчёт и сама предлагает,
+              что усилить, что сократить и когда лучше публиковать.
+            </p>
+            <div class="metric-bullets">
+              <div class="b">
+                <span class="ic">01</span>
+                <div class="t">Лучшие темы недели
+                  <span>Что собрало максимум вовлечения — и почему.</span>
+                </div>
+              </div>
+              <div class="b">
+                <span class="ic">02</span>
+                <div class="t">Темы, которые не зашли
+                  <span>С предложением, чем заменить или как переформулировать.</span>
+                </div>
+              </div>
+              <div class="b">
+                <span class="ic">03</span>
+                <div class="t">Лучшее время публикации
+                  <span>Каким слотам достаются просмотры — для этого канала и его аудитории.</span>
+                </div>
+              </div>
+              <div class="b">
+                <span class="ic">04</span>
+                <div class="t">Конкретные рекомендации
+                  <span>Что усилить в форматах и тоне, что выключить, что добавить в источники.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="report" aria-hidden="true">
+            <div class="topline">
+              <span><span class="dot"></span>еженедельный отчёт</span>
+              <span>// неделя 17</span>
+            </div>
+            <h5>Сводка по каналу</h5>
+            <div class="line"><span class="k">постов</span><span class="v">28 опубликовано · <em>+9% к прошлой</em></span></div>
+            <div class="line"><span class="k">просмотры</span><span class="v">в среднем <em>+12%</em> на пост</span></div>
+            <div class="line"><span class="k">реакции</span><span class="v">рост в пятничном слоте · <em>20:00</em></span></div>
+            <div class="line"><span class="k">лучший формат</span><span class="v">«разбор кейса» <em>· 3-й раз подряд</em></span></div>
+            <div class="line"><span class="k">слабее всего</span><span class="v">«цифры говорят» в утренних слотах</span></div>
+            <div class="line"><span class="k">рекомендация</span><span class="v"><em>сдвинуть «цифры говорят» с 09:00 на 16:00</em></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section class="process" id="process">
+    <div class="wrap">
+      <div class="process-card">
+        <div class="sec-header" style="margin-bottom: 0;">
+          <div class="eyebrow">от брифа до эфира</div>
+          <div style="height: 1.5rem;"></div>
+          <h2 class="display-l" style="max-width: 26ch;">Чёткие шаги. Каждый этап оставляет <em>артефакт.</em></h2>
+        </div>
+        <div class="process-grid">
+          <div class="step">
+            <div class="n">01 / Профиль</div>
+            <h4>Профиль медиа</h4>
+            <p>Аудитория, тон, темы, список источников и ключевых слов фиксируем в конфигурации.</p>
+          </div>
+          <div class="step">
+            <div class="n">02 / Подключение</div>
+            <h4>Подключение к Telegram</h4>
+            <p>Канал, бот публикации, админка. При необходимости несколько администраторов с правами.</p>
+          </div>
+          <div class="step">
+            <div class="n">03 / Запуск</div>
+            <h4>Боевой запуск</h4>
+            <p>Тестовый прогон расписания и форматов, далее перевод в режим 24/7 на сервере.</p>
+          </div>
+          <div class="step">
+            <div class="n">04 / Тюнинг</div>
+            <h4>Непрерывный тюнинг</h4>
+            <p>Темы, рубрики и тон дорабатываем по метрикам и обратной связи — это часть продукта, а не разовый запуск.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCALING — повторяемость для второго и следующих каналов -->
+  <section class="scaling" id="scaling">
+    <div class="wrap">
+      <div class="scaling-card">
+        <div class="scaling-grid">
+          <div>
+            <div class="eyebrow">повторяемость, а не разовый проект</div>
+            <div style="height: 1.5rem;"></div>
+            <h2 class="display-l">Каждый следующий канал — <em>конфиг, а не новый проект.</em></h2>
+            <p class="lead" style="margin-top: 1.5rem;">
+              Платформа построена как продукт. Чтобы запустить ещё один канал
+              для другого бренда или другой аудитории, не нужно ничего разрабатывать заново —
+              достаточно нового конфига и нескольких часов настройки.
+            </p>
+          </div>
+          <div>
+            <div class="scaling-list">
+              <div class="row">
+                <div class="n">01</div>
+                <div class="t">Новый бриф и конфигурация
+                  <span>Тематика, тон, источники, ключевые слова, расписание — отдельный YAML на канал.</span>
+                </div>
+                <div class="pill">~ 1 день</div>
+              </div>
+              <div class="row">
+                <div class="n">02</div>
+                <div class="t">Новый канал и боты
+                  <span>Создаём канал, бот публикации и бот аналитики, настраиваем доступы.</span>
+                </div>
+                <div class="pill">~ 0,5 дня</div>
+              </div>
+              <div class="row">
+                <div class="n">03</div>
+                <div class="t">Тестовый прогон
+                  <span>Сутки на проверку расписания, форматов и тона. Правим до боевого режима.</span>
+                </div>
+                <div class="pill">~ 1 день</div>
+              </div>
+              <div class="row">
+                <div class="n">04</div>
+                <div class="t">Боевой режим 24/7
+                  <span>Канал переходит в постоянный контур. Несколько каналов ведутся из одной админки.</span>
+                </div>
+                <div class="pill">далее</div>
+              </div>
+            </div>
+            <p style="margin-top: 1.5rem; font-family: var(--font-mono); font-size: 13px; color: var(--muted); letter-spacing: -0.005em;">
+              // итого: новый канал — 1–2 дня после готовности доступов · каждый канал изолирован и имеет свой конфиг
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINCIPLES — манифест-блок вместо плейсхолдер-цитаты -->
+  <section class="principles">
+    <div class="wrap">
+      <div class="principles-card">
+        <div class="eyebrow">наши принципы</div>
+        <div style="height: 1.5rem;"></div>
+        <h2 class="display-l">Мы держим три обещания — <em>они и есть продукт.</em></h2>
+
+        <div class="principles-grid">
+          <div class="p">
+            <div class="n">01 / Прозрачность</div>
+            <h4>Каждый этап оставляет артефакт</h4>
+            <p>
+              Бриф, конфиг, очередь черновиков, журнал публикаций, еженедельный отчёт —
+              всё доступно вам в любой момент. Мы не работаем «в чёрном ящике».
+            </p>
+          </div>
+          <div class="p">
+            <div class="n">02 / Контроль за вами</div>
+            <h4>Канал — ваш, до последней буквы</h4>
+            <p>
+              Любой пост можно перегенерить, отредактировать или удалить до публикации.
+              Любой источник, формат и слот — включить или выключить одной командой в Telegram.
+            </p>
+          </div>
+          <div class="p">
+            <div class="n">03 / Постоянство, а не запуск</div>
+            <h4>Поддержка — часть продукта</h4>
+            <p>
+              Канал — живой организм: меняется повестка, появляются новые источники, тон взрослеет.
+              Ежемесячное сопровождение — это не «техподдержка», а соавторство.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-final" id="offer">
+    <div class="wrap">
+      <div class="cta-final-card">
+        <div class="eyebrow">сделаем вместе</div>
+        <h2 class="display-l">Запуск под ключ и <em>ежемесячное сопровождение.</em></h2>
+        <p class="lead">
+          Мы отвечаем за инженерную и редакционную машину.
+          Вы — за стратегию бренда и финальные решения по тону и темам.
+          Прозрачные артефакты на каждом этапе.
+        </p>
+
+        <div class="included">
+          <div>
+            <h5>// Запуск под ключ</h5>
+            <ul>
+              <li>Бриф канала: тон, темы, аудитория, источники, расписание</li>
+              <li>Подключение Telegram: канал, бот публикации, бот аналитики, доступы</li>
+              <li>Настройка конфигурации: 30+ источников, 90+ ключевых слов, форматы</li>
+              <li>Тестовый прогон расписания и форматов — сутки на наблюдение</li>
+              <li>Перевод в боевой режим 24/7 на отдельном сервере</li>
+              <li>Передача доступов и инструкций по админ-панели</li>
+            </ul>
+          </div>
+          <div>
+            <h5>// Ежемесячное сопровождение</h5>
+            <ul>
+              <li>Мониторинг работы бота 24/7</li>
+              <li>Тюнинг тона и форматов под обратную связь аудитории</li>
+              <li>Добавление и обновление источников по запросу</li>
+              <li>Подключение новых рубрик, форматов и опросов</li>
+              <li>Техническая поддержка и устранение инцидентов</li>
+              <li>Ежемесячный отчёт по метрикам канала с рекомендациями</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-on-dark-primary" href="#top">Запросить демо <span class="arrow">→</span></a>
+          <a class="btn btn-on-dark-ghost" href="assets/brief-editorial-ai.docx" download>Скачать бриф</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <a class="brand" href="#top">
+            <span class="mark"></span>
+            Редакция<span style="font-weight:400; color:var(--muted);">/ИИ</span>
+          </a>
+          <p style="margin-top: 1rem; max-width: 38ch; color: var(--muted); font-size: 14.5px;">
+            ИИ-редакция для Telegram-медиа. Запуск под ключ, ежемесячное сопровождение.
+          </p>
+        </div>
+        <div>
+          <h5>Продукт</h5>
+          <ul>
+            <li><a href="#brief">Под ваш бриф</a></li>
+            <li><a href="#solution">Решение</a></li>
+            <li><a href="#formats">Форматы</a></li>
+            <li><a href="#rhythm">Ритм канала</a></li>
+            <li><a href="#engage">Вовлечение</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Платформа</h5>
+          <ul>
+            <li><a href="#inside">Что внутри</a></li>
+            <li><a href="#analytics">Аналитика</a></li>
+            <li><a href="#process">Процесс</a></li>
+            <li><a href="#scaling">Масштабирование</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Связь</h5>
+          <ul>
+            <li><a href="#offer">Запросить демо</a></li>
+            <li><a href="assets/brief-editorial-ai.docx" download>Скачать бриф</a></li>
+            <li><a href="#offer">Telegram</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="copy">
+        <span>© 2026 · ИИ-редакция для Telegram-медиа</span>
+        <span>Референс стиля: deepjudge.ai</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
