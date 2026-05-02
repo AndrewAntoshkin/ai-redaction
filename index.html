@@ -756,11 +756,11 @@
     .process-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 0.85rem;
       margin-top: 2.5rem;
     }
     @media (min-width: 720px) {
-      .process-grid { grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+      .process-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (min-width: 1020px) {
       .process-grid { grid-template-columns: repeat(4, 1fr); }
@@ -772,6 +772,8 @@
       flex-direction: column;
       gap: 0.5rem;
       min-height: 200px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
     }
     .process-grid .step .n {
       font-family: var(--font-mono);
@@ -1101,11 +1103,7 @@
     .formats-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
+      gap: 0.85rem;
       margin-top: 2.5rem;
     }
     @media (min-width: 720px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -1117,11 +1115,15 @@
       flex-direction: column;
       gap: 0.45rem;
       min-height: 170px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      transition: border-color 0.2s ease;
     }
+    .formats-grid .fmt:hover { border-color: var(--lavender); }
     .formats-grid .fmt .head {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       gap: 0.75rem;
       margin-bottom: 0.35rem;
     }
@@ -1135,10 +1137,15 @@
     }
     .formats-grid .fmt .len {
       font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--purple);
+      font-size: 10.5px;
+      color: var(--purple-deep);
+      background: var(--lavender-pale);
+      border: 1px solid var(--lavender);
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
       white-space: nowrap;
       letter-spacing: -0.005em;
+      text-transform: lowercase;
     }
     .formats-grid .fmt p {
       font-size: 14px;
@@ -1159,11 +1166,7 @@
     .formats-examples {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
+      gap: 0.85rem;
       margin: 0 0 2.5rem;
     }
     @media (min-width: 720px) { .formats-examples { grid-template-columns: repeat(3, 1fr); } }
@@ -1173,6 +1176,8 @@
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
     }
     .formats-examples .ex .head {
       font-family: var(--font-mono);
