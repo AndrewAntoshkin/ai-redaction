@@ -6,7 +6,7 @@
   <title>Slate · ИИ-редакция для Telegram</title>
 
   <!-- Suisse Int'l ≈ Switzer (Fontshare), Suisse Works ≈ Boska (Fontshare), Suisse Mono ≈ JetBrains Mono -->
-  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&f[]=boska@500,600,700&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&f[]=boska@500,500i,600,600i,700,700i&display=swap" rel="stylesheet" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -243,11 +243,12 @@
     }
 
     .display-xl {
-      font-family: var(--font-sans);
+      font-family: var(--font-serif);
+      font-style: italic;
       font-weight: 500;
-      font-size: 56px;
-      letter-spacing: -0.04em;
-      line-height: 0.96;
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      letter-spacing: -0.03em;
+      line-height: 1.02;
       color: var(--ink);
     }
     .display-xl em {
@@ -255,14 +256,16 @@
       font-style: italic;
       font-weight: 500;
       letter-spacing: -0.025em;
+      color: var(--ink);
     }
 
     .display-l {
-      font-family: var(--font-sans);
+      font-family: var(--font-serif);
+      font-style: italic;
       font-weight: 500;
-      font-size: clamp(2.25rem, 4.6vw, 4rem);
-      letter-spacing: -0.035em;
-      line-height: 1.0;
+      font-size: clamp(2.25rem, 4.6vw, 4.25rem);
+      letter-spacing: -0.025em;
+      line-height: 1.05;
       color: var(--ink);
     }
     .display-l em {
@@ -272,10 +275,11 @@
     }
 
     .display-m {
-      font-family: var(--font-sans);
+      font-family: var(--font-serif);
+      font-style: italic;
       font-weight: 500;
-      font-size: clamp(1.65rem, 2.6vw, 2.25rem);
-      letter-spacing: -0.025em;
+      font-size: clamp(1.65rem, 2.6vw, 2.4rem);
+      letter-spacing: -0.02em;
       line-height: 1.1;
       color: var(--ink);
     }
@@ -293,27 +297,54 @@
     }
 
     /* =====================================================================
-       HERO
+       HERO — fullscreen-ish, centered (microsoft.ai vibe)
        ===================================================================== */
     .hero {
-      padding: clamp(4rem, 8vw, 7rem) 0 clamp(3rem, 6vw, 5rem);
+      padding: clamp(5rem, 10vw, 9rem) 0 clamp(3rem, 6vw, 5rem);
+      position: relative;
+      overflow: hidden;
     }
-    .hero .eyebrow { margin-bottom: 2.25rem; }
-    .hero h1 { margin-bottom: 1.75rem; max-width: 18ch; }
-    .hero .lead { margin-bottom: 2.5rem; }
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.55;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .hero::before {
+      width: 720px; height: 720px;
+      top: -180px; left: -120px;
+      background: radial-gradient(circle, var(--lavender) 0%, transparent 70%);
+    }
+    .hero::after {
+      width: 580px; height: 580px;
+      top: 10%; right: -120px;
+      background: radial-gradient(circle, #ffd9c4 0%, transparent 70%);
+    }
+    .hero .wrap { position: relative; z-index: 1; }
+    .hero-stage {
+      max-width: 980px;
+      margin: 0 auto;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .hero-stage .eyebrow { margin-bottom: 2rem; }
+    .hero-stage h1 { margin-bottom: 1.75rem; max-width: 16ch; }
+    .hero-stage .lead { margin: 0 auto 2.5rem; max-width: 56ch; }
     .hero-cta {
       display: flex;
       gap: 0.65rem;
       flex-wrap: wrap;
+      justify-content: center;
     }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: clamp(2.5rem, 5vw, 4rem);
-      align-items: end;
-    }
-    @media (min-width: 1020px) {
-      .hero-grid { grid-template-columns: 1.2fr 0.8fr; }
+    .hero-preview {
+      max-width: 920px;
+      margin: clamp(3.5rem, 6vw, 5rem) auto 0;
     }
 
     /* Hero visual: «карточка-окно» в духе DJ search-card */
@@ -921,9 +952,14 @@
        ===================================================================== */
     .sec-header {
       margin-bottom: clamp(2.5rem, 4vw, 3.5rem);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .sec-header .eyebrow { margin-bottom: 1.5rem; }
     .sec-header h2 { max-width: 22ch; }
+    .sec-header .lead { max-width: 56ch; margin-left: auto; margin-right: auto; }
 
     /* =====================================================================
        Small util
@@ -1640,24 +1676,23 @@
   <!-- HERO -->
   <section class="hero" id="top">
     <div class="wrap">
-      <div class="hero-grid">
-        <div>
-          <div class="eyebrow">что такое slate</div>
-          <h1 class="display-xl">
-            Telegram-канал, которым <em>управляет</em> платформа.
-          </h1>
-          <p class="lead xl">
-            Система сама отбирает новости из ваших источников по заданным темам,
-            пишет посты в нужном тоне, публикует их по расписанию,
-            запускает опросы и рубрики, собирает метрики и подсказывает, что менять
-            на следующей неделе.
-          </p>
-          <div class="hero-cta">
-            <a class="btn btn-primary" href="#offer">Обсудить пилот <span class="arrow">→</span></a>
-            <a class="btn btn-ghost" href="#brief">Как устроено</a>
-          </div>
+      <div class="hero-stage">
+        <div class="eyebrow">что такое slate</div>
+        <h1 class="display-xl">
+          Telegram-канал, который <em>ведёт себя сам.</em>
+        </h1>
+        <p class="lead xl">
+          Платформа отбирает новости из ваших источников, пишет посты в нужном тоне,
+          публикует по расписанию, запускает опросы и рубрики,
+          собирает метрики и подсказывает, что менять на следующей неделе.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#offer">Обсудить пилот <span class="arrow">→</span></a>
+          <a class="btn btn-ghost" href="#brief">Как устроено</a>
         </div>
+      </div>
 
+      <div class="hero-preview">
         <!-- Hero card — превью «дня редакции», без бизнес-привязки -->
         <div class="hero-card" aria-hidden="true">
           <div class="topline">
