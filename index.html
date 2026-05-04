@@ -6,7 +6,7 @@
   <title>Slate · ИИ-редакция для Telegram</title>
 
   <!-- Suisse Int'l ≈ Switzer (Fontshare), Suisse Works ≈ Boska (Fontshare), Suisse Mono ≈ JetBrains Mono -->
-  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&f[]=boska@500,500i,600,600i,700,700i&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&f[]=boska@500,600,700&display=swap" rel="stylesheet" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -16,13 +16,13 @@
        Палитра — снято с deepjudge.ai (webflow CSS, точные значения)
        ===================================================================== */
     :root {
-      --beige: #ede9e5;
-      --beige-soft: #fffaf5;
-      --beige-deep: #e6e0db;
-      --tan: #c6b9ae;
+      --beige: #ffffff;
+      --beige-soft: #f7f8fa;
+      --beige-deep: #eef1f4;
+      --tan: #c8ced6;
       --paper: #ffffff;
-      --line: #efeae3;
-      --line-strong: #c8c4be;
+      --line: #e8eaee;
+      --line-strong: #c8ced6;
 
       --ink: #242422;
       --ink-2: #2e2e2e;
@@ -36,7 +36,7 @@
       --purple-deep: #3b2079;
       --purple-darker: #280f8b;
 
-      --bg: #fff8f3;
+      --bg: #ffffff;
       --surface: var(--paper);
       --accent: var(--purple);
 
@@ -243,12 +243,11 @@
     }
 
     .display-xl {
-      font-family: var(--font-serif);
-      font-style: italic;
+      font-family: var(--font-sans);
       font-weight: 500;
-      font-size: clamp(3rem, 6vw, 5.5rem);
-      letter-spacing: -0.03em;
-      line-height: 1.02;
+      font-size: 56px;
+      letter-spacing: -0.04em;
+      line-height: 0.96;
       color: var(--ink);
     }
     .display-xl em {
@@ -256,16 +255,14 @@
       font-style: italic;
       font-weight: 500;
       letter-spacing: -0.025em;
-      color: var(--ink);
     }
 
     .display-l {
-      font-family: var(--font-serif);
-      font-style: italic;
+      font-family: var(--font-sans);
       font-weight: 500;
-      font-size: clamp(2.25rem, 4.6vw, 4.25rem);
-      letter-spacing: -0.025em;
-      line-height: 1.05;
+      font-size: clamp(2.25rem, 4.6vw, 4rem);
+      letter-spacing: -0.035em;
+      line-height: 1.0;
       color: var(--ink);
     }
     .display-l em {
@@ -275,11 +272,10 @@
     }
 
     .display-m {
-      font-family: var(--font-serif);
-      font-style: italic;
+      font-family: var(--font-sans);
       font-weight: 500;
-      font-size: clamp(1.65rem, 2.6vw, 2.4rem);
-      letter-spacing: -0.02em;
+      font-size: clamp(1.65rem, 2.6vw, 2.25rem);
+      letter-spacing: -0.025em;
       line-height: 1.1;
       color: var(--ink);
     }
@@ -297,54 +293,43 @@
     }
 
     /* =====================================================================
-       HERO — fullscreen-ish, centered (microsoft.ai vibe)
+       HERO
        ===================================================================== */
     .hero {
-      padding: clamp(5rem, 10vw, 9rem) 0 clamp(3rem, 6vw, 5rem);
-      position: relative;
-      overflow: hidden;
+      padding: clamp(6rem, 11vw, 10rem) 0 clamp(5rem, 9vw, 8rem);
     }
-    .hero::before,
-    .hero::after {
-      content: "";
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(90px);
-      opacity: 0.55;
-      z-index: 0;
-      pointer-events: none;
+    .hero .eyebrow {
+      margin-bottom: 2.25rem;
+      justify-content: center;
     }
-    .hero::before {
-      width: 720px; height: 720px;
-      top: -180px; left: -120px;
-      background: radial-gradient(circle, var(--lavender) 0%, transparent 70%);
-    }
-    .hero::after {
-      width: 580px; height: 580px;
-      top: 10%; right: -120px;
-      background: radial-gradient(circle, #ffd9c4 0%, transparent 70%);
-    }
-    .hero .wrap { position: relative; z-index: 1; }
-    .hero-stage {
-      max-width: 980px;
-      margin: 0 auto;
+    .hero h1 {
+      margin: 0 auto 1.75rem;
+      width: 640px;
+      max-width: 100%;
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-size: 64px;
+      letter-spacing: -0.065em;
+      line-height: 0.9;
     }
-    .hero-stage .eyebrow { margin-bottom: 2rem; }
-    .hero-stage h1 { margin-bottom: 1.75rem; max-width: 16ch; }
-    .hero-stage .lead { margin: 0 auto 2.5rem; max-width: 56ch; }
+    .hero .lead {
+      margin: 0 auto 2.5rem;
+      max-width: 58ch;
+      text-align: center;
+    }
     .hero-cta {
       display: flex;
       gap: 0.65rem;
       flex-wrap: wrap;
       justify-content: center;
     }
-    .hero-preview {
-      max-width: 920px;
-      margin: clamp(3.5rem, 6vw, 5rem) auto 0;
+    .hero-grid {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3.5rem, 6vw, 5.5rem);
+      align-items: center;
+    }
+    @media (min-width: 1020px) {
+      .hero-grid { display: flex; }
     }
 
     /* Hero visual: «карточка-окно» в духе DJ search-card */
@@ -357,6 +342,7 @@
       flex-direction: column;
       gap: 1.25rem;
       box-shadow: 0 1px 0 rgba(36,36,34,0.04);
+      width: min(100%, 920px);
     }
     .hero-card .topline {
       display: flex;
@@ -497,7 +483,7 @@
        Problem — dark card + numbered list
        ===================================================================== */
     .problem {
-      padding: clamp(3rem, 6vw, 5rem) 0 clamp(5rem, 10vw, 8rem);
+      padding: clamp(6rem, 10vw, 9rem) 0 clamp(7rem, 12vw, 10rem);
     }
     .problem-card {
       background: var(--ink);
@@ -561,7 +547,7 @@
        Solution — pastel lavender card + cycle list
        ===================================================================== */
     .solution {
-      padding: 0 0 clamp(5rem, 10vw, 8rem);
+      padding: 0 0 clamp(7rem, 12vw, 10rem);
     }
     .solution-card {
       background: var(--lavender);
@@ -629,7 +615,7 @@
        Stats (как DJ "+65h saved per user...")
        ===================================================================== */
     .stats {
-      padding: clamp(5rem, 8vw, 7rem) 0;
+      padding: clamp(7rem, 10vw, 10rem) 0;
     }
     .stats h2 { max-width: 22ch; margin-bottom: 3rem; }
     .stats-grid {
@@ -692,7 +678,7 @@
        Inside (что внутри — простыми словами)
        ===================================================================== */
     .inside {
-      padding: clamp(5rem, 10vw, 8rem) 0;
+      padding: clamp(7rem, 12vw, 10rem) 0;
     }
     .inside-grid {
       display: grid;
@@ -745,7 +731,7 @@
        Process timeline
        ===================================================================== */
     .process {
-      padding: 0 0 clamp(5rem, 10vw, 8rem);
+      padding: 0 0 clamp(7rem, 12vw, 10rem);
     }
     .process-card {
       background: var(--paper);
@@ -756,11 +742,11 @@
     .process-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0.85rem;
+      gap: 2rem;
       margin-top: 2.5rem;
     }
     @media (min-width: 720px) {
-      .process-grid { grid-template-columns: repeat(2, 1fr); }
+      .process-grid { grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
     }
     @media (min-width: 1020px) {
       .process-grid { grid-template-columns: repeat(4, 1fr); }
@@ -772,8 +758,6 @@
       flex-direction: column;
       gap: 0.5rem;
       min-height: 200px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
     }
     .process-grid .step .n {
       font-family: var(--font-mono);
@@ -878,7 +862,7 @@
        Final CTA
        ===================================================================== */
     .cta-final {
-      padding: 0 0 clamp(4rem, 6vw, 6rem);
+      padding: 0 0 clamp(6rem, 10vw, 9rem);
     }
     .cta-final-card {
       background: var(--ink);
@@ -953,7 +937,7 @@
        Section headings shared
        ===================================================================== */
     .sec-header {
-      margin-bottom: clamp(2.5rem, 4vw, 3.5rem);
+      margin-bottom: clamp(3rem, 5vw, 4.5rem);
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -961,7 +945,7 @@
     }
     .sec-header .eyebrow { margin-bottom: 1.5rem; }
     .sec-header h2 { max-width: 22ch; }
-    .sec-header .lead { max-width: 56ch; margin-left: auto; margin-right: auto; }
+    .sec-header .lead { margin-left: auto; margin-right: auto; }
 
     /* =====================================================================
        Small util
@@ -1034,7 +1018,7 @@
     /* =====================================================================
        Brief — manifesto, 4 cards (sources / topics / formats / tone)
        ===================================================================== */
-    .brief { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .brief { padding: 0 0 clamp(7rem, 12vw, 10rem); }
     .brief-card {
       background: var(--lavender-pale);
       border: 1px solid var(--line);
@@ -1044,7 +1028,13 @@
       overflow: hidden;
     }
     .brief-card .header {
-      max-width: 60ch;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      max-width: 70ch;
+      margin: 0 auto;
+      text-align: center;
       position: relative;
       z-index: 1;
     }
@@ -1062,7 +1052,6 @@
       z-index: 1;
     }
     @media (min-width: 720px) { .brief-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 1020px) { .brief-grid { grid-template-columns: repeat(4, 1fr); } }
     .brief-grid .b {
       background: var(--paper);
       border-radius: var(--radius);
@@ -1099,11 +1088,15 @@
     /* =====================================================================
        Formats library — 15 cards
        ===================================================================== */
-    .formats { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .formats { padding: 0 0 clamp(7rem, 12vw, 10rem); }
     .formats-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0.85rem;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
       margin-top: 2.5rem;
     }
     @media (min-width: 720px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -1115,15 +1108,11 @@
       flex-direction: column;
       gap: 0.45rem;
       min-height: 170px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      transition: border-color 0.2s ease;
     }
-    .formats-grid .fmt:hover { border-color: var(--lavender); }
     .formats-grid .fmt .head {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
       gap: 0.75rem;
       margin-bottom: 0.35rem;
     }
@@ -1137,15 +1126,10 @@
     }
     .formats-grid .fmt .len {
       font-family: var(--font-mono);
-      font-size: 10.5px;
-      color: var(--purple-deep);
-      background: var(--lavender-pale);
-      border: 1px solid var(--lavender);
-      padding: 0.22rem 0.55rem;
-      border-radius: 999px;
+      font-size: 11px;
+      color: var(--purple);
       white-space: nowrap;
       letter-spacing: -0.005em;
-      text-transform: lowercase;
     }
     .formats-grid .fmt p {
       font-size: 14px;
@@ -1166,18 +1150,20 @@
     .formats-examples {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0.85rem;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
       margin: 0 0 2.5rem;
     }
     @media (min-width: 720px) { .formats-examples { grid-template-columns: repeat(3, 1fr); } }
     .formats-examples .ex {
-      background: var(--paper);
+      background: var(--beige-soft);
       padding: 1.25rem 1.35rem 1.4rem;
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
     }
     .formats-examples .ex .head {
       font-family: var(--font-mono);
@@ -1200,7 +1186,7 @@
     /* =====================================================================
        Rhythm — schedule (dark card)
        ===================================================================== */
-    .rhythm { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .rhythm { padding: 0 0 clamp(7rem, 12vw, 10rem); }
     .rhythm-card {
       background: var(--ink);
       color: var(--beige);
@@ -1364,7 +1350,7 @@
     /* =====================================================================
        Analytics — lavender card with weekly report mockup
        ===================================================================== */
-    .analytics { padding: 0 0 clamp(5rem, 10vw, 8rem); }
+    .analytics { padding: 0 0 clamp(7rem, 12vw, 10rem); }
     .analytics-card {
       background: var(--lavender);
       border-radius: var(--radius-lg);
@@ -1681,23 +1667,23 @@
   <!-- HERO -->
   <section class="hero" id="top">
     <div class="wrap">
-      <div class="hero-stage">
-        <div class="eyebrow">что такое slate</div>
-        <h1 class="display-xl">
-          Telegram-канал, который <em>ведёт себя сам.</em>
-        </h1>
-        <p class="lead xl">
-          Платформа отбирает новости из ваших источников, пишет посты в нужном тоне,
-          публикует по расписанию, запускает опросы и рубрики,
-          собирает метрики и подсказывает, что менять на следующей неделе.
-        </p>
-        <div class="hero-cta">
-          <a class="btn btn-primary" href="#offer">Обсудить пилот <span class="arrow">→</span></a>
-          <a class="btn btn-ghost" href="#brief">Как устроено</a>
+      <div class="hero-grid">
+        <div>
+          <h1 class="display-xl">
+            Telegram-канал, которым <em>управляет</em> платформа.
+          </h1>
+          <p class="lead xl">
+            Система сама отбирает новости из ваших источников по заданным темам,
+            пишет посты в нужном тоне, публикует их по расписанию,
+            запускает опросы и рубрики, собирает метрики и подсказывает, что менять
+            на следующей неделе.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="#offer">Обсудить пилот <span class="arrow">→</span></a>
+            <a class="btn btn-ghost" href="#brief">Как устроено</a>
+          </div>
         </div>
-      </div>
 
-      <div class="hero-preview">
         <!-- Hero card — превью «дня редакции», без бизнес-привязки -->
         <div class="hero-card" aria-hidden="true">
           <div class="topline">
@@ -1880,6 +1866,13 @@
             <div>
               <h4>Каждый новый канал — заново</h4>
               <p>Без настраиваемого ядра запуск второго канала превращается в новый проект.</p>
+            </div>
+          </div>
+          <div class="pp">
+            <div class="n">06</div>
+            <div>
+              <h4>Нет общей картины по эффекту</h4>
+              <p>Команда видит отдельные посты, но не понимает, какие темы и форматы двигают канал вперёд.</p>
             </div>
           </div>
         </div>
